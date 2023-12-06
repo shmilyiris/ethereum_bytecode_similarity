@@ -1,3 +1,5 @@
+import os.path
+import subprocess
 import tokenize
 import zlib, base64
 from tokenize import NUMBER, NAME, NEWLINE
@@ -7,7 +9,6 @@ from z3 import *
 from analysis import *
 from basicblock import BasicBlock
 from instruction import Instruction
-from evm_cfg_builder import CFG
 
 log = logging.getLogger(__name__)
 
@@ -21,12 +22,13 @@ CONSTANT_ONES_159 = BitVecVal((1 << 160) - 1, 256)
 
 Assertion = namedtuple('Assertion', ['pc', 'model'])
 
+
 def construct_static_edges(jump_type, vertices, edges):
     key_list = sorted(jump_type.keys())
     length = len(key_list)
     for i, key in enumerate(key_list):
-        if jump_type[key] != "terminal" and jump_type[key] != "unconditional" and i+1 < length:
-            target = key_list[i+1]
+        if jump_type[key] != "terminal" and jump_type[key] != "unconditional" and i + 1 < length:
+            target = key_list[i + 1]
             edges[key].append(target)
             vertices[key].set_falls_to(target)
     return vertices, edges
@@ -36,12 +38,15 @@ def start_add_0x(file):
     add_0x_contents = []
     with open(file, 'r') as f:
         contents = f.readlines()
+        if len(contents) > 1 and contents[1].startswith('0x'):
+            return
         for content in contents:
             add_0x_contents.append('0x' + content)
 
     with open(file, 'w') as f:
         for content in add_0x_contents:
             f.write(content)
+
 
 def build_cfg_and_analyze(disasm_file):
     start_add_0x(disasm_file)
@@ -140,6 +145,7 @@ def collect_vertices(tokens):
             jump_type[key] = "falls_to"
     return end_ins_dict, instructions, jump_type
 
+
 def construct_bb(end_ins_dict, instructions, jump_type):
     vertices, edges = {}, {}
     sorted_addresses = sorted(instructions.keys())
@@ -168,25 +174,42 @@ def construct_bb(end_ins_dict, instructions, jump_type):
     return vertices, edges
 
 
-def generate_semantics(bytecode, idx=None):
+def generate_semantics(bytecode='', address=None, optimized=None):
+
     disasm_file = 'tmp.disasm.evm'
-    os.system(f'evm disasm {bytecode} > {disasm_file}')
-    disasm_file = f'e{idx}.txt'
+    ret = subprocess.run(['evm', 'disasm', bytecode, '>', disasm_file], shell=True, stderr=open(os.devnull, 'w'), stdout=open(os.devnull, 'w'))
+    # ret = os.system(f'evm disasm {bytecode} > {disasm_file}')
+    if ret.returncode != 0:
+        # cmd failed
+        if address and os.path.exists(f'./dataset/opcode_without_opt/{address}.txt') and os.path.exists(f'./dataset/opcode_opt/{address}.txt'):
+            disasm_file = f'./dataset/opcode_without_opt/{address}.txt' if optimized == 1 else f'./dataset/opcode_opt/{address}.txt'
+
     return build_cfg_and_analyze(disasm_file)
 
 
-def similarity_scoring(bytecode1, bytecode2):
-    contract_semantic_1 = generate_semantics(bytecode1, 1)
-    contract_semantic_2 = generate_semantics(bytecode2, 2)
+def similarity_scoring_via_bytecode(bytecode1, bytecode2):
+    contract_semantic_1 = generate_semantics(bytecode1)
+    contract_semantic_2 = generate_semantics(bytecode2)
     relative_score, self_score = contract_similarity(contract_semantic_1, contract_semantic_2)
     similarity_score = relative_score / float(self_score)
-    logging_info("Similarity Score: " + str(similarity_score))
+    # print(f"\nSimilarity Score: {relative_score}/{self_score}={similarity_score}")
     return {"score": similarity_score, "nquery": len(contract_semantic_1.keys()),
             "ntarget": len(contract_semantic_2.keys())}
 
+def similarity_scoring_via_address(address):
+    contract_semantic_1 = generate_semantics(f'./dataset/bytecode_without_opt/{address}.txt', address, 1)
+    contract_semantic_2 = generate_semantics(f'./dataset/bytecode_opt/{address}.txt', address, 0)
+    relative_score, self_score = contract_similarity(contract_semantic_1, contract_semantic_2)
+    similarity_score = relative_score / float(self_score)
+    # print(f"\nSimilarity Score: {relative_score}/{self_score}={similarity_score}")
+    return {"score": similarity_score, "nquery": len(contract_semantic_1.keys()),
+            "ntarget": len(contract_semantic_2.keys())}
 
-if __name__ == '__main__':
-    print(similarity_scoring(
-        bytecode1='6080604052348015600f57600080fd5b506004361060285760003560e01c8063c298557814602d575b600080fd5b60336047565b604051603e91906067565b60405180910390f35b60008054905090565b6000819050919050565b6061816050565b82525050565b6000602082019050607a6000830184605a565b9291505056fea2646970667358221220526a8f6da6d41c2d85c1d1a55ad4f664adadbd713df79e1e0d2e1089358e7fa164736f6c63430008090033',
-        bytecode2='6080604052348015600f57600080fd5b506004361060285760003560e01c8063c298557814602d575b600080fd5b60005460405190815260200160405180910390f3fea26469706673582212204f9066d0a5ead7d0dfb11a91e0575f9e2a839dee3f8b4a5e7e9b7bfeb7c4b5cd64736f6c63430008090033'
-    ))
+def similarity_scoring_via_different_address(address1, address2):
+    contract_semantic_1 = generate_semantics('', address1, 1)
+    contract_semantic_2 = generate_semantics('', address2, 1)
+    relative_score, self_score = contract_similarity(contract_semantic_1, contract_semantic_2)
+    similarity_score = relative_score / float(self_score)
+    # print(f"\nSimilarity Score: {relative_score}/{self_score}={similarity_score}")
+    return {"score": similarity_score, "nquery": len(contract_semantic_1.keys()),
+            "ntarget": len(contract_semantic_2.keys())}

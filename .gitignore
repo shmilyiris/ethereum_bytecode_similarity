@@ -4,3 +4,5 @@ __pycache__/
 *.txt
 *.asm
 *.disasm.evm
+dataset/
+debug.py

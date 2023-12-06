@@ -29,7 +29,10 @@ OPCODE_TYPE = {
 }
 
 # Parameter set
-sigma = 0.1
+omega = 0.1
+k = 1
+alpha_birthmark = [1 for _ in range(9)]
+alpha_metadata = [1 for _ in range(6)]
 
 
 def analyzeBlock(block):
@@ -73,7 +76,6 @@ def analyzeBlock(block):
         instr_parts = str.split(instruction, ' ')
         instr_name = instr_parts[1]
         instr_type = getTypeOfInstruction(instr_name)
-        print(instr_name)
 
         if instr_type == "UNSUPPORTED":
             continue
@@ -167,7 +169,7 @@ def analyzeBlock(block):
 
         if instr_type == CALL_OP_TYPE:
             # add CALL to all the queues
-            for k, v in Qs.iteritems():
+            for k, v in Qs.items():
                 new_v = v.append('CALL')
                 Qs[k] = new_v
 
@@ -266,13 +268,13 @@ def compute_semantic(vertices):
 
     return block_semantic
 
-def vector_similarity(mark1, mark2):
+def vector_similarity(mark1, mark2, alpha):
     top = 0
     bottom = 0
-    assert (len(mark1) == len(mark2)), "Incosistent vector lengths"
+    assert (len(mark1) == len(mark2) == len(alpha)), "Incosistent vector lengths"
     for i in range(len(mark1)):
-        top += abs(mark1[i] - mark2[i])
-        bottom += max(mark1[i], mark2[i])
+        top += (alpha[i] * abs(mark1[i] - mark2[i]))
+        bottom += (alpha[i] * max(mark1[i], mark2[i]))
 
     if bottom == 0:
         return 0
@@ -281,19 +283,21 @@ def vector_similarity(mark1, mark2):
 
 
 def sigmoid(x):
-    return 1 / (1 + math.exp(-(x - 0.5)))
+    return 1 / (1 + math.exp(-k * (x - 0.5)))
 
 
 # 0: unsimilar. 1: similar
 def block_similarity(block1, block2):
     birth_mark1 = block1["birthmark"]
     birth_mark2 = block2["birthmark"]
-    sim_mark = vector_similarity(birth_mark1.get_vector(), birth_mark2.get_vector())
+    sim_mark = vector_similarity(birth_mark1.get_vector(), birth_mark2.get_vector(), alpha_birthmark)
     meta_data1 = block1["metadata"]
     meta_data2 = block2["metadata"]
-    sim_meta = vector_similarity(meta_data1.get_vector(), meta_data2.get_vector())
+    sim_meta = vector_similarity(meta_data1.get_vector(), meta_data2.get_vector(), alpha_metadata)
 
-    sim_block = (1 - sim_mark) / float((1 - sim_mark) + sigma * sim_meta)
+    if (1 - sim_mark) + omega * sim_meta == 0:
+        return 0
+    sim_block = (1 - sim_mark) / float((1 - sim_mark) + omega * sim_meta)
     return sim_block
 
 
@@ -338,4 +342,8 @@ def contract_similarity(contract1, contract2):
     for b2 in contract2.keys():
         similarity_2_1 += compute_best_match(contract2[b2], contract1)
 
-    return max(similarity_1_2, similarity_2_1), max(similarity_1_1, similarity_2_2)
+    if similarity_2_1 > similarity_1_2:
+        return similarity_2_1, similarity_2_2
+    else:
+        return similarity_1_2, similarity_1_1
+    # return max(similarity_1_2, similarity_2_1), max(similarity_1_1, similarity_2_2)
