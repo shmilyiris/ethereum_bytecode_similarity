@@ -1,7 +1,4 @@
 class BirthMark:
-    '''
-    aliu: embedding vector for a birthmark of a block
-    '''
     def __init__(self, pc_cantor, def_cantor, use_cantor, call_count, du_cantor, uu_cantor, update_call, use_call, call_finalize):
         self.path_condition_mark = pc_cantor
         self.def_mark = def_cantor
@@ -42,11 +39,3 @@ class BirthMark:
 
     def get_vector(self):
         return [self.path_condition_mark, self.def_mark, self.use_mark, self.call_mark, self.du_mark, self.uu_mark, self.update_call_mark, self.use_call_mark, self.call_finalize_mark]
-    '''
-    def display(self):
-        six.print_(self.inst)
-        if hasattr(self, 'storage'):
-            six.print_("[storage]: " + str(self.storage) + ", " + str(self.access))
-        if hasattr(self, 'recipient'):
-            six.print_("[recipient]: " + str(self.recipient))
-    '''

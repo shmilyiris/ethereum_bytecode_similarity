@@ -3,6 +3,7 @@ import numpy as np
 import os
 from tqdm import tqdm
 from random import choice
+import csv
 
 
 class TestEClone():
@@ -14,6 +15,7 @@ class TestEClone():
         self.op_asm = dataset_dir + 'opcode_without_opt/'
         self.op_opt = dataset_dir + 'opcode_opt/'
         self.source = dataset_dir + 'sol/'
+        self.save_path = './address_to_score.csv'
         self.threshold = 0.84
 
     def single_test(self, bytecode1, bytecode2):
@@ -25,6 +27,7 @@ class TestEClone():
         for address in tqdm(address_list, f"testing dataset with threshold of {self.threshold}"):
             score = similarity_scoring_via_address(address)['score']
             scores = np.append(scores, score)
+            self.save_result(self.save_path, address, score)
         acc = len(scores[scores > self.threshold]) / len(scores)
 
         return acc
@@ -40,6 +43,10 @@ class TestEClone():
 
         return acc
 
+    def save_result(self, save_path, address, similarity_score):
+        with open(save_path, 'r', encoding='utf-8-sig', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow([address, similarity_score])
 
 if __name__ == '__main__':
     myTest = TestEClone('./dataset/')
@@ -51,8 +58,8 @@ if __name__ == '__main__':
     # print(myTest.single_test(bytecode1, bytecode2))
 
     # 2. one address input
-    # acc = myTest.batch_test(address_list=addrs[:10])
+    acc = myTest.batch_test(address_list=addrs)
 
     # 3. random address input
-    acc = myTest.random_test(address_list=addrs, num=10)
-    print(f'accuracy is {acc}')
+    # acc = myTest.random_test(address_list=addrs, num=10)
+    # print(f'accuracy is {acc}')

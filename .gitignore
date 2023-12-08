@@ -1,7 +1,6 @@
 *.pyc
 __pycache__/
 .idea/
-*.txt
 *.asm
 *.disasm.evm
 dataset/

@@ -1,4 +1,3 @@
-import six
 import os
 
 class BasicBlock:
@@ -64,16 +63,3 @@ class BasicBlock:
 
     def get_path_condition(self):
         return self.path_condition
-
-    def display(self):
-        six.print_("================")
-        six.print_("start address: %d" % self.start)
-        six.print_("end address: %d" % self.end)
-        six.print_("end statement type: " + self.type)
-        if hasattr(self, 'path_condition'):
-            six.print_("path condition: " + str(self.path_condition))
-        for instr in self.instructions:
-            #six.print_(instr)
-            instr.display()
-            #six.print_(instr["inst_str"])
-            #print instr["storage"]
