@@ -8,7 +8,7 @@ import csv
 
 class TestEClone():
 
-    def __init__(self, dataset_dir):
+    def __init__(self, dataset_dir, threshold):
         self.dataset_dir = dataset_dir
         self.bc_asm = dataset_dir + 'bytecode_without_opt/'
         self.bc_opt = dataset_dir + 'bytecode_opt/'
@@ -16,7 +16,7 @@ class TestEClone():
         self.op_opt = dataset_dir + 'opcode_opt/'
         self.source = dataset_dir + 'sol/'
         self.save_path = './address_to_score.csv'
-        self.threshold = 0.84
+        self.threshold = threshold
 
     def single_test(self, bytecode1, bytecode2):
         score = similarity_scoring_via_bytecode(bytecode1, bytecode2)['score']
@@ -49,7 +49,7 @@ class TestEClone():
             writer.writerow([address, similarity_score])
 
 if __name__ == '__main__':
-    myTest = TestEClone('./dataset/')
+    myTest = TestEClone('./dataset/', 0.84)
     addrs = os.listdir(myTest.source)
     for i in range(len(addrs)):
         addrs[i] = addrs[i][:-4]
