@@ -9,6 +9,7 @@ class BirthMark:
         self.update_call_mark = update_call
         self.use_call_mark = use_call
         self.call_finalize_mark = call_finalize
+        self.alpha = [1 for _ in range(9)]
 
     def get_path_condition_mark(self):
         return self.path_condition_mark
@@ -39,3 +40,12 @@ class BirthMark:
 
     def get_vector(self):
         return [self.path_condition_mark, self.def_mark, self.use_mark, self.call_mark, self.du_mark, self.uu_mark, self.update_call_mark, self.use_call_mark, self.call_finalize_mark]
+
+    def get_baseline_vector(self):
+        return [self.def_mark, self.use_mark, self.call_mark]
+
+    def get_alpha(self):
+        return self.alpha
+
+    def get_baseline_alpha(self):
+        return self.alpha[1:4]

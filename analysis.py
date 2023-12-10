@@ -3,6 +3,7 @@ import math
 import sys
 from metadata import MetaData
 from birthmark import BirthMark
+from globals import is_baseline, omega, k
 
 log = logging.getLogger(__name__)
 
@@ -29,10 +30,7 @@ OPCODE_TYPE = {
 }
 
 # Parameter set
-omega = 0.1
-k = 1
-alpha_birthmark = [1 for _ in range(9)]
-alpha_metadata = [1 for _ in range(6)]
+
 
 
 def analyzeBlock(block):
@@ -290,10 +288,11 @@ def sigmoid(x):
 def block_similarity(block1, block2):
     birth_mark1 = block1["birthmark"]
     birth_mark2 = block2["birthmark"]
-    sim_mark = vector_similarity(birth_mark1.get_vector(), birth_mark2.get_vector(), alpha_birthmark)
+    sim_mark = vector_similarity(birth_mark1.get_vector(), birth_mark2.get_vector(), birth_mark1.get_alpha()) if not is_baseline \
+        else vector_similarity(birth_mark1.get_baseline_vector(), birth_mark2.get_baseline_vector(), birth_mark1.get_baseline_alpha())
     meta_data1 = block1["metadata"]
     meta_data2 = block2["metadata"]
-    sim_meta = vector_similarity(meta_data1.get_vector(), meta_data2.get_vector(), alpha_metadata)
+    sim_meta = vector_similarity(meta_data1.get_vector(), meta_data2.get_vector(), meta_data1.get_alpha())
 
     if (1 - sim_mark) + omega * sim_meta == 0:
         return 0

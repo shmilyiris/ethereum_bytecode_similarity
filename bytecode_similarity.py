@@ -191,7 +191,8 @@ def similarity_scoring_via_bytecode(bytecode1, bytecode2):
     contract_semantic_1 = generate_semantics(bytecode1)
     contract_semantic_2 = generate_semantics(bytecode2)
     relative_score, self_score = contract_similarity(contract_semantic_1, contract_semantic_2)
-    similarity_score = relative_score / float(self_score)
+    similarity_score = 0 if self_score == 0 else relative_score / float(self_score)
+
     # print(f"\nSimilarity Score: {relative_score}/{self_score}={similarity_score}")
     return {"score": similarity_score, "nquery": len(contract_semantic_1.keys()),
             "ntarget": len(contract_semantic_2.keys())}
@@ -200,7 +201,7 @@ def similarity_scoring_via_address(address):
     contract_semantic_1 = generate_semantics(f'./dataset/bytecode_without_opt/{address}.txt', address, 1)
     contract_semantic_2 = generate_semantics(f'./dataset/bytecode_opt/{address}.txt', address, 0)
     relative_score, self_score = contract_similarity(contract_semantic_1, contract_semantic_2)
-    similarity_score = relative_score / float(self_score)
+    similarity_score = 0 if self_score == 0 else relative_score / float(self_score)
     # print(f"\nSimilarity Score: {relative_score}/{self_score}={similarity_score}")
     return {"score": similarity_score, "nquery": len(contract_semantic_1.keys()),
             "ntarget": len(contract_semantic_2.keys())}
@@ -209,7 +210,17 @@ def similarity_scoring_via_different_address(address1, address2):
     contract_semantic_1 = generate_semantics('', address1, 1)
     contract_semantic_2 = generate_semantics('', address2, 1)
     relative_score, self_score = contract_similarity(contract_semantic_1, contract_semantic_2)
-    similarity_score = relative_score / float(self_score)
+    similarity_score = 0 if self_score == 0 else relative_score / float(self_score)
+
     # print(f"\nSimilarity Score: {relative_score}/{self_score}={similarity_score}")
+    return {"score": similarity_score, "nquery": len(contract_semantic_1.keys()),
+            "ntarget": len(contract_semantic_2.keys())}
+
+def similarity_score(disasm_file1, disasm_file2):
+    contract_semantic_1 = build_cfg_and_analyze(disasm_file1)
+    contract_semantic_2 = build_cfg_and_analyze(disasm_file2)
+    relative_score, self_score = contract_similarity(contract_semantic_1, contract_semantic_2)
+    similarity_score = 0 if self_score == 0 else relative_score / float(self_score)
+
     return {"score": similarity_score, "nquery": len(contract_semantic_1.keys()),
             "ntarget": len(contract_semantic_2.keys())}

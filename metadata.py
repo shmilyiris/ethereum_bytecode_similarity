@@ -6,6 +6,7 @@ class MetaData:
         self.chain = chainOP
         self.stack = stackOP
         self.memory = memoryProp
+        self.alpha = [1 for _ in range(6)]
 
     def get_arithmetic_value(self):
         return self.arithmetic
@@ -27,3 +28,6 @@ class MetaData:
 
     def get_vector(self):
         return [self.arithmetic, self.logic, self.env, self.chain, self.stack, self.memory]
+
+    def get_alpha(self):
+        return self.alpha
