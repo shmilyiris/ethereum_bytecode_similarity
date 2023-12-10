@@ -8,7 +8,6 @@ import pandas as pd
 from globals import threshold
 from multiprocessing import Pool
 
-
 is_baseline = True
 
 def write_row(save_path, row):
@@ -25,8 +24,8 @@ class TestEClone():
         self.op_asm = dataset_dir + 'opcode_without_opt/'
         self.op_opt = dataset_dir + 'opcode_opt/'
         self.source = dataset_dir + 'sol/'
-        self.positive_path = './positive.csv'
-        self.negative_path = './negative.csv'
+        self.positive_path = './test/positive.csv'
+        self.negative_path = './test/negative.csv'
         self.threshold = threshold
 
     def single_test(self, bytecode1, bytecode2):
@@ -66,8 +65,8 @@ if __name__ == '__main__':
     num_of_cores = multiprocessing.cpu_count()
     target_num = 3156
     p = Pool(num_of_cores)
-    fileName = './test_Baseline.csv' if is_baseline else './test_EClone.csv'
-    test_cases = pd.read_csv('./test_cases.csv')
+    fileName = './test/test_Baseline.csv' if is_baseline else './test/test_EClone.csv'
+    test_cases = pd.read_csv('./test/test_cases.csv')
 
     for i in range(test_cases.shape[0]):
         file1, file2 = test_cases.iloc[i]['file1'], test_cases.iloc[i]['file2']

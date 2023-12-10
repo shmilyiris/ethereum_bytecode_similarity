@@ -34,7 +34,7 @@ class Plot():
         plt.ylabel('Accuracy of Clone Detection (%)')
         plt.title('Accuracy')
         plt.legend(loc='best')
-        plt.savefig('./Accuracy_test.png', dpi=300)
+        plt.savefig('./result/Accuracy_test.png', dpi=300)
 
     def roc(self):
         fpr_ec, tpr_ec, thresholds_ec = roc_curve(list(self.eclone_res['label']), list(self.eclone_res['score']))
@@ -45,7 +45,7 @@ class Plot():
         plt.xlabel("False Positive Rate (%)", fontsize=15)
         plt.ylabel("True Positive Rate (%)", fontsize=15)
         plt.legend(loc='best')
-        plt.savefig('./ROC_test.png', dpi=300)
+        plt.savefig('./result/ROC_test.png', dpi=300)
 
 
 if __name__ == '__main__':
