@@ -24,8 +24,8 @@ There are three ways to trigger the test process in `test.py`:
 
 The best threshold is 0.92.
 
-![](./Accuracy_test.png)
+![](./result/Accuracy_test.png)
 
 ## ROC
 
-![](./ROC_test.png)
+![](./result/ROC_test.png)
