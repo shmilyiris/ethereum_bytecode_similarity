@@ -3,12 +3,14 @@ import pandas as pd
 from sklearn.metrics import roc_curve
 import numpy as np
 
+
 def get_acc(df, t):
     pred_pos = df[df['score'] > t]
     pred_neg = df[df['score'] <= t]
     acc = (pred_pos[pred_pos['label'] == 1].shape[0] + pred_neg[pred_neg['label'] == -1].shape[0]) / \
           df.shape[0]
     return acc
+
 
 class Plot():
     def __init__(self, eclone_res, baseline_res):
@@ -24,28 +26,29 @@ class Plot():
         bar_width = 0.3
         idx_eclone = np.arange(len(thresholds))
         idx_baseline = idx_eclone + bar_width
-        plt.bar(idx_eclone, height=eclone_acc, width=bar_width, color='g', label='EClone')
-        plt.bar(idx_baseline, height=baseline_acc, width=bar_width, color='b', label='Baseline')
-        plt.xticks(idx_eclone + bar_width/2, thresholds)
+        plt.bar(idx_eclone, height=eclone_acc, width=bar_width, color='white', edgecolor='black', label='EClone')
+        plt.bar(idx_baseline, height=baseline_acc, width=bar_width, color='white', hatch='xxx', edgecolor='#4625fd',
+                label='Baseline')
+        plt.xticks(idx_eclone + bar_width / 2, thresholds)
         plt.xlabel('Threshold')
         plt.ylabel('Accuracy of Clone Detection (%)')
         plt.title('Accuracy')
         plt.legend(loc='best')
         plt.savefig('./Accuracy_test.png', dpi=300)
 
-
     def roc(self):
         fpr_ec, tpr_ec, thresholds_ec = roc_curve(list(self.eclone_res['label']), list(self.eclone_res['score']))
         fpr_bl, tpr_bl, thresholds_bl = roc_curve(list(self.baseline_res['label']), list(self.baseline_res['score']))
-        plt.plot(fpr_ec, tpr_ec, label='EClone')
-        plt.plot(fpr_bl, tpr_bl, label='Baseline')
+        plt.plot(fpr_ec, tpr_ec, label='EClone', color='r')
+        plt.plot(fpr_bl, tpr_bl, label='Baseline', color='g', linestyle='--')
         plt.title('ROC')
         plt.xlabel("False Positive Rate (%)", fontsize=15)
         plt.ylabel("True Positive Rate (%)", fontsize=15)
         plt.legend(loc='best')
         plt.savefig('./ROC_test.png', dpi=300)
 
+
 if __name__ == '__main__':
     p = Plot('./test_EClone_final.csv', './test_Baseline_final.csv')
-    p.roc()
-    # p.acc()
+    # p.roc()
+    p.acc()
