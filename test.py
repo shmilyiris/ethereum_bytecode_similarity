@@ -1,21 +1,32 @@
-from bytecode_similarity import similarity_scoring_via_address, similarity_scoring_via_bytecode, similarity_scoring_via_different_address
+import multiprocessing
+from bytecode_similarity import similarity_scoring_via_address, similarity_scoring_via_bytecode, similarity_scoring_via_different_address, similarity_score
 import numpy as np
-import os
 from tqdm import tqdm
 from random import choice
 import csv
+import pandas as pd
+from globals import threshold
+from multiprocessing import Pool
 
+
+is_baseline = True
+
+def write_row(save_path, row):
+    with open(save_path, 'a+', encoding='utf-8-sig', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(row)
 
 class TestEClone():
 
-    def __init__(self, dataset_dir, threshold):
+    def __init__(self, dataset_dir):
         self.dataset_dir = dataset_dir
         self.bc_asm = dataset_dir + 'bytecode_without_opt/'
         self.bc_opt = dataset_dir + 'bytecode_opt/'
         self.op_asm = dataset_dir + 'opcode_without_opt/'
         self.op_opt = dataset_dir + 'opcode_opt/'
         self.source = dataset_dir + 'sol/'
-        self.save_path = './address_to_score.csv'
+        self.positive_path = './positive.csv'
+        self.negative_path = './negative.csv'
         self.threshold = threshold
 
     def single_test(self, bytecode1, bytecode2):
@@ -27,39 +38,41 @@ class TestEClone():
         for address in tqdm(address_list, f"testing dataset with threshold of {self.threshold}"):
             score = similarity_scoring_via_address(address)['score']
             scores = np.append(scores, score)
-            self.save_result(self.save_path, address, score)
+            write_row(self.positive_path, [address, score])
         acc = len(scores[scores > self.threshold]) / len(scores)
 
         return acc
 
     def random_test(self, address_list, num):
-        scores = np.array([])
-        for i in range(num):
-            addr1, addr2 = choice(address_list), choice(address_list)
+        for _ in [0 for i in range(num)]:
+            addr1 = addr2 = ''
+            while addr1 == addr2:
+                addr1, addr2 = choice(address_list), choice(address_list)
+
+            if addr2 < addr1:
+                addr1, addr2 = addr2, addr1
             score = similarity_scoring_via_different_address(addr1, addr2)['score']
-            scores = np.append(scores, score)
-            print(f'{addr1} {addr2} {score}')
-        acc = len(scores[scores > self.threshold]) / len(scores)
+            write_row(self.negative_path, [addr1, addr2, score])
 
-        return acc
+    def test_by_file(self, disasm_file1, disasm_file2, fileName, label):
+        # ./dataset/
+        score = similarity_score(disasm_file1, disasm_file2)['score']
+        write_row(fileName, [disasm_file1, disasm_file2, score, label])
 
-    def save_result(self, save_path, address, similarity_score):
-        with open(save_path, 'r', encoding='utf-8-sig', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow([address, similarity_score])
+
 
 if __name__ == '__main__':
-    myTest = TestEClone('./dataset/', 0.84)
-    addrs = os.listdir(myTest.source)
-    for i in range(len(addrs)):
-        addrs[i] = addrs[i][:-4]
+    myTest = TestEClone('./dataset/')
+    num_of_cores = multiprocessing.cpu_count()
+    target_num = 3156
+    p = Pool(num_of_cores)
+    fileName = './test_Baseline.csv' if is_baseline else './test_EClone.csv'
+    test_cases = pd.read_csv('./test_cases.csv')
 
-    # 1. two bytecode input (replace the parameters with your bytecode file position)
-    # print(myTest.single_test(bytecode1, bytecode2))
+    for i in range(test_cases.shape[0]):
+        file1, file2 = test_cases.iloc[i]['file1'], test_cases.iloc[i]['file2']
+        p.apply_async(myTest.test_by_file, args=(file1, file2, fileName, test_cases.iloc[i]['label']))
 
-    # 2. one address input
-    acc = myTest.batch_test(address_list=addrs)
+    p.close()
+    p.join()
 
-    # 3. random address input
-    # acc = myTest.random_test(address_list=addrs, num=10)
-    # print(f'accuracy is {acc}')
