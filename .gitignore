@@ -6,4 +6,3 @@ __pycache__/
 dataset/
 dataset_/
 debug.py
-*.csv
