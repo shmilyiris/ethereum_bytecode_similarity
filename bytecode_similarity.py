@@ -22,6 +22,39 @@ CONSTANT_ONES_159 = BitVecVal((1 << 160) - 1, 256)
 
 Assertion = namedtuple('Assertion', ['pc', 'model'])
 
+def change_format(file):
+    with open(file) as disasm_file:
+        file_contents = disasm_file.readlines()
+        i = 0
+        firstLine = file_contents[0].strip('\n')
+        for line in file_contents:
+            line = line.replace('SELFDESTRUCT', 'SUICIDE')
+            line = line.replace('Missing opcode 0xfd', 'REVERT')
+            line = line.replace('Missing opcode 0xfe', 'ASSERTFAIL')
+            line = line.replace('Missing opcode', 'INVALID')
+            line = line.replace(':', '')
+            lineParts = line.split(' ')
+            try: # removing initial zeroes
+                lineParts[0] = str(int(lineParts[0]))
+
+            except:
+                lineParts[0] = lineParts[0]
+            lineParts[-1] = lineParts[-1].strip('\n')
+            try: # adding arrow if last is a number
+                lastInt = lineParts[-1]
+                if(int(lastInt, 16) or int(lastInt, 16) == 0) and len(lineParts) > 2:
+                    lineParts[-1] = "=>"
+                    lineParts.append(lastInt)
+            except Exception:
+                pass
+            file_contents[i] = ' '.join(lineParts)
+            i = i + 1
+        file_contents[0] = firstLine
+        file_contents[-1] += '\n'
+
+    with open(file, 'w') as disasm_file:
+        disasm_file.write("\n".join(file_contents))
+
 
 def construct_static_edges(jump_type, vertices, edges):
     key_list = sorted(jump_type.keys())
@@ -50,6 +83,7 @@ def start_add_0x(file):
 
 def build_cfg_and_analyze(disasm_file):
     start_add_0x(disasm_file)
+    # change_format(disasm_file)
     with open(disasm_file, 'r') as f:
         f.readline()  # Remove first line
         tokens = tokenize.generate_tokens(f.readline)

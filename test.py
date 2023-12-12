@@ -64,8 +64,8 @@ if __name__ == '__main__':
     myTest = TestEClone('./dataset/')
     num_of_cores = multiprocessing.cpu_count()
     target_num = 3156
-    p = Pool(num_of_cores)
-    fileName = './test/test_Baseline.csv' if is_baseline else './test/test_EClone.csv'
+    p = Pool(int(num_of_cores / 2))
+    fileName = './test/test_Baseline_final.csv' if is_baseline else './test/test_EClone_final.csv'
     test_cases = pd.read_csv('./test/test_cases.csv')
 
     for i in range(test_cases.shape[0]):
