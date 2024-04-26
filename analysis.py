@@ -32,7 +32,6 @@ OPCODE_TYPE = {
 # Parameter set
 
 
-
 def analyzeBlock(block):
     func_hash = ""
     path_condition_meta = 0

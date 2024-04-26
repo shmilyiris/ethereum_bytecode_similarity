@@ -1,4 +1,6 @@
 import os.path
+import os
+import shutil
 import subprocess
 import tokenize
 import zlib, base64
@@ -209,15 +211,11 @@ def construct_bb(end_ins_dict, instructions, jump_type):
 
 
 def generate_semantics(bytecode='', address=None, optimized=None):
-
-    disasm_file = 'tmp.disasm.evm'
-    ret = subprocess.run(['evm', 'disasm', bytecode, '>', disasm_file], shell=True, stderr=open(os.devnull, 'w'), stdout=open(os.devnull, 'w'))
-    # ret = os.system(f'evm disasm {bytecode} > {disasm_file}')
-    if ret.returncode != 0:
-        # cmd failed
-        if address and os.path.exists(f'./dataset/opcode_without_opt/{address}.txt') and os.path.exists(f'./dataset/opcode_opt/{address}.txt'):
-            disasm_file = f'./dataset/opcode_without_opt/{address}.txt' if optimized == 1 else f'./dataset/opcode_opt/{address}.txt'
-
+    address = bytecode.split('/')[-1].split('.')[0]
+    disasm_file = f'./dataset/{address}.txt'
+    # ret = subprocess.run(['evm', 'disasm', bytecode, '>', disasm_file], shell=True, stderr=open(os.devnull, 'w'), stdout=open(os.devnull, 'w'))
+    ret = os.system(f'evm disasm {bytecode} > {disasm_file}')
+    
     return build_cfg_and_analyze(disasm_file)
 
 

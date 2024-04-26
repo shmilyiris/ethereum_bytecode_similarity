@@ -7,8 +7,8 @@ import csv
 import pandas as pd
 from globals import threshold
 from multiprocessing import Pool
-
-is_baseline = True
+import pandas as pd
+import time
 
 def write_row(save_path, row):
     with open(save_path, 'a+', encoding='utf-8-sig', newline='') as f:
@@ -26,11 +26,11 @@ class TestEClone():
         self.source = dataset_dir + 'sol/'
         self.positive_path = './test/positive.csv'
         self.negative_path = './test/negative.csv'
-        self.threshold = threshold
+        self.threshold = 0.9
 
     def single_test(self, bytecode1, bytecode2):
-        score = similarity_scoring_via_bytecode(bytecode1, bytecode2)['score']
-        return 'similar!' if score > self.threshold else 'not similar!'
+        res = similarity_scoring_via_bytecode(bytecode1, bytecode2)['score']
+        return res
 
     def batch_test(self, address_list):
         scores = np.array([])
@@ -61,17 +61,22 @@ class TestEClone():
 
 
 if __name__ == '__main__':
+    benchmark = pd.read_csv('benchmark.csv')
+    rootDir = './bytecode/'
     myTest = TestEClone('./dataset/')
-    num_of_cores = multiprocessing.cpu_count()
-    target_num = 3156
-    p = Pool(int(num_of_cores / 2))
-    fileName = './test/test_Baseline_final.csv' if is_baseline else './test/test_EClone_final.csv'
-    test_cases = pd.read_csv('./test/test_cases.csv')
+    T1 = time.time()
 
-    for i in range(test_cases.shape[0]):
-        file1, file2 = test_cases.iloc[i]['file1'], test_cases.iloc[i]['file2']
-        p.apply_async(myTest.test_by_file, args=(file1, file2, fileName, test_cases.iloc[i]['label']))
+    scoreList = []
+    for i in range(benchmark.shape[0]):
+        addr1, addr2 = benchmark.iloc[i]['addr1'], benchmark.iloc[i]['addr2']
+        bytecode1, bytecode2 = rootDir + addr1 + '.txt', rootDir + addr2 + '.txt'
+        res = myTest.single_test(bytecode1, bytecode2)
+        scoreList.append(res)
+        print(res)
+    benchmark['EClone Score'] = scoreList
+    benchmark.to_csv('benchmark_EClone.csv')
 
-    p.close()
-    p.join()
+    T2 = time.time()
+    print(T2, T1)
+    print(f'Execution Time {(T2 - T1) * 1000}ms.')
 
